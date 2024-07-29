@@ -83,7 +83,7 @@ class CiteNum:
 					citation_data = await response.json()
 				return citation_data[0].get("citationCount")
 			else:
-				return Localization.get('app.module.ieee.fetch.cite_num_not_found')
+				return None
 
 async def execute(param):
 	entries = []
@@ -101,25 +101,25 @@ async def execute(param):
 			title = metadata.get('displayDocTitle', '')
 			meta_authors = metadata.get('authors', [])
 			authors = ", ".join([author['name'] for author in meta_authors])
+			conference = metadata.get('publicationTitle', '')
+			if conference == '':
+				conference = metadata.get('publisher', '')
 			meta_date = metadata.get('insertDate', '')
 			date = datetime.strptime(meta_date, "%d %B %Y")
-			startPage = metadata.get('startPage', '')
-			endPage = metadata.get('endPage', '')
-			pages = startPage + "~" + endPage
 			abstract = metadata.get('abstract', '')
 			cite_num = await CiteNum.fetch_cite_num(title)
 
 			new_entry = {
-				"url":		  url,
-				"title":		title,
-				"author":	   authors,
-				"conference":   Localization.get('app.module.ieee.name'),
-				"pages":		pages,
-				"date":		 date,
-				"abstract":	 abstract,
-				"cite_num":	 cite_num,
+				"url":		url,
+				"title":	title,
+				"author":	authors,
+				"conference":	conference,
+				"pages":	None,
+				"date":		date,
+				"abstract":	abstract,
+				"cite_num":	cite_num,
 				"submitted":	True,
-				"relevant_no":  relevant_no,
+				"relevant_no":	relevant_no,
 			}
 			entries.append(new_entry)
 
