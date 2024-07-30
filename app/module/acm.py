@@ -18,6 +18,7 @@ async def fetch_acm(session, url):
         lxml_data = html.fromstring(soup_bytes)
         return lxml_data
 
+
 async def fetch_semantic(session, url):
     async with aiohttp.ClientSession() as session:
         # URLエンコード
@@ -32,35 +33,43 @@ async def fetch_semantic(session, url):
         
         # フルURL
         full_url = f"{base_url}{paper_url}?fields={fields}"
-
-        # 非同期リクエストを送信
-        async with session.get(full_url) as response:
-            res = await response.text()
-            
-            # JSONデータを解析
-            res_json = json.loads(res)
-            
-            # 指定されたフィールドを抽出
-            venue = res_json.get("venue")
-            citation_count = res_json.get("citationCount")
-            author_list = res_json.get("authors")
-            if author_list:
-                author_names = [author["name"] for author in author_list]
-                authors=", ".join(author_names)
-            else:
+        
+        try:
+            # 非同期リクエストを送信
+            async with session.get(full_url) as response:
+                res = await response.text()
+                
+                # JSONデータを解析
+                res_json = json.loads(res)
+                
+                # 指定されたフィールドを抽出
+                venue = res_json.get("venue")
+                citation_count = res_json.get("citationCount")
+                author_list = res_json.get("authors")
+                if author_list:
+                    author_names = [author["name"] for author in author_list]
+                    authors=", ".join(author_names)
+                else:
+                    authors = None
+                if res_json.get("abstract") and res_json.get("abstract") != "[]":
+                    api_abs = res_json.get("abstract")
+                else:
+                    api_abs = None
+        except:
+                venue = None
+                citation_count = None
                 authors = None
-            if res_json.get("abstract") and res_json.get("abstract") != "[]":
-                api_abs = res_json.get("abstract")
-            else:
                 api_abs = None
-           
-            return venue, citation_count, authors, api_abs
+   
+        return venue, citation_count, authors, api_abs
+
 
 async def fetch_data(session, siteInfo):
     acm_data = await fetch_acm(session, siteInfo["url"])
     venue, citetion_count, authors, api_abs = await fetch_semantic(session, siteInfo["url"])
     
     return siteInfo, acm_data, venue, citetion_count, authors, api_abs
+
 
 async def load_site_contents(siteData):
     
