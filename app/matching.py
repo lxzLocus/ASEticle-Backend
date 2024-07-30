@@ -12,24 +12,6 @@ class ConferenceMatcher:
         for entry in entries:
             pass
 
-# async def match(entry) -> None:
-#     search_value = entry["conference"]
-    
-#     conf_rank = ( #会議名とtier情報の照合,会議名が一致する場合は正式名称に修正したものを取得
-#         pl.read_csv("data/conf_n_journal_list.csv")
-#         .filter(pl.col("title").is_in([search_value]) | pl.col("acronym").is_in([search_value]))
-#         .select(["title", "tier"])
-#     )
-    
-#     #変換
-#     conf_info = conf_rank.to_dict()
-#     conf_name = conf_info["title"].to_list()
-#     conf_tier = conf_info["tier"].to_list()
-#     if len(conf_name) == 0:
-#         conf_name = [""]
-#         conf_tier = [-1]
-
-#     fix_entry(entry, conf_name[0], conf_tier[0])
 
 async def match(entry) -> None:
     search_value = entry["conference"]
@@ -52,7 +34,7 @@ async def match(entry) -> None:
     
 async def fuzzy_match(entry) -> None:
     search_value = entry["conference"]
-    
+
     conf_rank = (
         pl.read_csv("data/conf_n_journal_list.csv")
         .filter(
@@ -81,11 +63,8 @@ async def fuzzy_match(entry) -> None:
 def fuzzy_match_score(search_value, series):
     ans = process.extractOne(search_value, series)
     print("extract:" + str(ans))
-    # if ans[1] < 90:
-    #     return 0
-    # return ans[2]
     if ans[1] < 90:
-        return "hoge"
+        return "hoge zxqjb"
     return ans[0]
 
 def fix_entry(entry, fixed_conf_name, tier):
