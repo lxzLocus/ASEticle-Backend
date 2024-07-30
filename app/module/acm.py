@@ -132,8 +132,8 @@ async def load_site_contents(siteData):
             cite_num = None
             submitted = None
             
-            # エントリーを追加する
-            add_entry(siteInfo["url"], title, authors, conference, pages, date, abstract, cite_num, submitted, siteInfo["relevant_no"])
+        # エントリーを追加する
+        add_entry(siteInfo["url"], title, authors, conference, pages, date, abstract, cite_num, submitted, siteInfo["relevant_no"])
 
 
 # エントリーを追加する関数
