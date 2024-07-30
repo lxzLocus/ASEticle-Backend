@@ -14,51 +14,66 @@ class ConferenceMatcher:
 
 
 async def match(entry) -> None:
-    search_value = entry["conference"]
+    search_value = fetch_conf_name(entry)
     
-    conf_rank = ( #会議名とtier情報の照合,会議名が一致する場合は正式名称に修正したものを取得
-        pl.read_csv("data/conf_n_journal_list.csv")
-        .filter(pl.col("title").str.contains(search_value) | pl.col("acronym").str.contains(search_value))
-        .select(["title", "tier"])
-    )
-    
-    #変換
-    conf_info = conf_rank.to_dict()
-    conf_name = conf_info["title"].to_list()
-    conf_tier = conf_info["tier"].to_list()
-    if len(conf_name) == 0:
+    if search_value != "":
+        conf_rank = ( #会議名とtier情報の照合,会議名が一致する場合は正式名称に修正したものを取得
+            pl.read_csv("data/conf_n_journal_list.csv")
+            .filter(pl.col("title").str.contains(search_value) | pl.col("acronym").str.contains(search_value))
+            .select(["title", "tier"])
+        )
+        
+        #変換
+        conf_info = conf_rank.to_dict()
+        conf_name = conf_info["title"].to_list()
+        conf_tier = conf_info["tier"].to_list()
+        if len(conf_name) == 0:
+            conf_name = [""]
+            conf_tier = [-1]
+    else:
         conf_name = [""]
         conf_tier = [-1]
 
     fix_entry(entry, conf_name[0], conf_tier[0])
     
 async def fuzzy_match(entry) -> None:
-    search_value = entry["conference"]
+    search_value = fetch_conf_name(entry)
 
-    conf_rank = (
-        pl.read_csv("data/conf_n_journal_list.csv")
-        .filter(
-            (pl.col("title").str
-            .contains(pl.col("title")
-            .map_batches(lambda s: fuzzy_match_score(search_value, s)))
-            ) |
-            (pl.col("acronym").str
-            .contains(pl.col("acronym")
-            .map_batches(lambda s: fuzzy_match_score(search_value, s)))
+    if search_value != "":
+        conf_rank = (
+            pl.read_csv("data/conf_n_journal_list.csv")
+            .filter(
+                (pl.col("title").str
+                .contains(pl.col("title")
+                .map_batches(lambda s: fuzzy_match_score(search_value, s)))
+                ) |
+                (pl.col("acronym").str
+                .contains(pl.col("acronym")
+                .map_batches(lambda s: fuzzy_match_score(search_value, s)))
+                )
             )
+            .select(["title", "tier"])
         )
-        .select(["title", "tier"])
-    )
-    
-    #変換
-    conf_info = conf_rank.to_dict()
-    conf_name = conf_info["title"].to_list()
-    conf_tier = conf_info["tier"].to_list()
-    if len(conf_name) == 0:
+        
+        #変換
+        conf_info = conf_rank.to_dict()
+        conf_name = conf_info["title"].to_list()
+        conf_tier = conf_info["tier"].to_list()
+        if len(conf_name) == 0:
+            conf_name = [""]
+            conf_tier = [-1]
+    else:
         conf_name = [""]
         conf_tier = [-1]
     
     fix_entry(entry, conf_name[0], conf_tier[0])
+
+def fetch_conf_name(entry) -> str:
+    if entry!=None and entry!={}: 
+        if entry["conference"] != None:
+            return entry["conference"]
+    
+    return ""
 
 def fuzzy_match_score(search_value, series):
     ans = process.extractOne(search_value, series)
@@ -66,6 +81,7 @@ def fuzzy_match_score(search_value, series):
     if ans[1] < 90:
         return "hoge zxqjb"
     return ans[0]
+    
 
 def fix_entry(entry, fixed_conf_name, tier):
     # 引数のクエリに対して、(可能であれば)会議名の修正とtierデータを追加
