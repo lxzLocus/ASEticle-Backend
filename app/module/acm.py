@@ -4,7 +4,6 @@ import json
 from bs4 import BeautifulSoup
 from lxml import html
 from datetime import datetime
-from PyPDF2 import PdfFileReader
 from io import BytesIO
 from urllib.parse import quote
 
@@ -18,12 +17,6 @@ async def fetch_acm(session, url):
         soup_bytes = bytes(soup_str, encoding="utf8")
         lxml_data = html.fromstring(soup_bytes)
         return lxml_data
-
-async def fetch_pdf(session, url):
-    pdf_url = url.replace("abs", "pdf")
-    async with session.get(pdf_url) as res:
-        pdf_data = await res.read()
-        return res.status, pdf_data
 
 async def fetch_semantic(session, url):
     async with aiohttp.ClientSession() as session:
@@ -55,7 +48,7 @@ async def fetch_semantic(session, url):
                 author_names = [author["name"] for author in author_list]
                 authors=", ".join(author_names)
             else:
-                authors = "('o')?"
+                authors = None
             if res_json.get("abstract") and res_json.get("abstract") != "[]":
                 api_abs = res_json.get("abstract")
             else:
@@ -65,10 +58,9 @@ async def fetch_semantic(session, url):
 
 async def fetch_data(session, siteInfo):
     acm_data = await fetch_acm(session, siteInfo["url"])
-    pdf_status, pdf_data = await fetch_pdf(session, siteInfo["url"])
     venue, citetion_count, authors, api_abs = await fetch_semantic(session, siteInfo["url"])
     
-    return siteInfo, acm_data, pdf_status, pdf_data, venue, citetion_count, authors, api_abs
+    return siteInfo, acm_data, venue, citetion_count, authors, api_abs
 
 async def load_site_contents(siteData):
     
@@ -77,7 +69,7 @@ async def load_site_contents(siteData):
             tasks = [fetch_data(session, siteInfo) for siteInfo in siteData]
             results = await asyncio.gather(*tasks)
             
-            for siteInfo, acm_data, pdf_status, pdf_data, venue, citetion_count, authors, api_abs in results:
+            for siteInfo, acm_data, venue, citetion_count, authors, api_abs in results:
                 # Title
                 title = acm_data.xpath("//meta[@property='og:title']/@content")[0]
                 
@@ -114,7 +106,7 @@ async def load_site_contents(siteData):
                 elif acm_data.xpath("//*[@id='abstract']/div/text()"):
                     abstract=acm_data.xpath("//*[@id='abstract']/div/text()")
                 else:
-                    abstract = "('o')?"
+                    abstract = None
                 
                 # Cite num 要確認
                 cite_num = citetion_count
@@ -157,4 +149,4 @@ def add_entry(url, title, author, conference, pages, date, abstract, cite_num, s
 def load_acm_contents(siteData):
     asyncio.run(load_site_contents(siteData))
 
-    return json.dumps(entries, indent=4)
+    return entries
