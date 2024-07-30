@@ -37,7 +37,7 @@ async def fetch_semantic(session, url):
         base_url = "https://api.semanticscholar.org/graph/v1/paper/"
 
         # Query params
-        fields = "citationCount,influentialCitationCount,venue,publicationVenue,publicationVenue,publicationTypes,journal"
+        fields = "citationCount, influentialCitationCount, venue, publicationVenue, publicationTypes, journal"
         
         #url
         full_url = f"{base_url}{encoded_url}?fields={fields}"
