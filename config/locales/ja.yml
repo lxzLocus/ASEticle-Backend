@@ -1,0 +1,15 @@
+app:
+  module:
+    ieee:
+      name: "IEEE"
+      fetch:
+        http_error: "HTTPエラーが発生しました: "
+        error: "エラーが発生しました: "
+        cite_num_not_found: "被引用数が見つかりませんでした"
+      extract:
+        fetch_error: "ページの内容が取得されていません"
+        not_found: "メタデータが見つかりませんでした"
+        json_error: "JSONの解析に失敗しました: "
+config:
+  routes:
+    bad_request: "Missing 'params' parameter"
