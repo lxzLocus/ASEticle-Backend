@@ -1,7 +1,6 @@
 import asyncio
 import aiohttp
 import googlescholar_test
-import requests
 
 """
 # テスト
@@ -21,27 +20,50 @@ if __name__ == "__main__":
     query = "machine+learning"
 """
 # SerpApiのAPIキーを環境変数から取得
-api_key =[]
+api_keys = []
 
-query = "machine+learning"
+
+query ="machine+learning"
 
 # 指定されたドメインのみを許可
 allowed_domains = ["https://dl.acm.org/", "https://arxiv.org/", "https://ieeexplore.ieee.org/", "https://www.sciencedirect.com/"]
 
+# 現在のAPIキーのインデックス
+current_key_index = 0
+
+async def get_api_key():
+    global current_key_index
+    while current_key_index < len(api_keys):
+        api_key = api_keys[current_key_index]
+        return api_key
+    raise Exception("すべてのAPIキーが回数制限に達しました。")
+
 # 02
 async def fetch_results(session, query, start, index):
-    params = {
-        "engine": "google_scholar",
-        "q": query,
-        "start": start,
-        "api_key": api_key,
-        "num": 20
-    }
+    global current_key_index
+    while current_key_index < len(api_keys):
+        api_key = await get_api_key()
+        params = {
+            "engine": "google_scholar",
+            "q": query,
+            "start": start,
+            "api_key": api_key,
+            "num": 20
+        }
     
-    async with session.get("https://serpapi.com/search?", params=params) as response:
-        result = await response.json()
-        #print(result)
-        return (index, result)
+        try:
+            async with session.get("https://serpapi.com/search?", params=params) as response:
+                result = await response.json()
+                if 'error' in result and 'Rate limit reached' in result['error']:
+                    print(f"APIキー {api_key} の回数制限に達しました。次のAPIキーを試します。")
+                    current_key_index += 1
+                else:
+                    return (index, result)
+        except Exception as e:
+            print(f"APIキー {api_key} の使用中にエラーが発生しました: {e}")
+            current_key_index += 1
+
+    raise Exception("すべてのAPIキーが回数制限に達しました。")
 
 # 01
 async def search_googlescholar(query):
@@ -125,7 +147,7 @@ def main(query):
     citation_count_test = [{'citation_count': 988, 'relevant_no': 0}, {'citation_count': 455, 'relevant_no': 1}, {'citation_count': 281, 'relevant_no': 2}, {'citation_count': 402, 'relevant_no': 3}, {'citation_count': 201, 'relevant_no': 4}, {'citation_count': 260, 'relevant_no': 5}, {'citation_count': 269, 'relevant_no': 6}, {'citation_count': 527, 'relevant_no': 7}, {'citation_count': 1027, 'relevant_no': 8}, {'citation_count': 225, 'relevant_no': 9}, {'citation_count': 1117, 'relevant_no': 10}, {'citation_count': 789, 'relevant_no': 11}, {'citation_count': 977, 'relevant_no': 12}, {'citation_count': 857, 'relevant_no': 13}, {'citation_count': 787, 'relevant_no': 14}, {'citation_count': 755, 'relevant_no': 15}, {'citation_count': 409, 'relevant_no': 16}, {'citation_count': 169, 'relevant_no': 17}, {'citation_count': 337, 'relevant_no': 18}, {'citation_count': 246, 'relevant_no': 19}]
 
 
-    acm, arxiv, ieee, sciencedirect ,citation_count= acm_test,arxiv_test, ieee_test, sciencedirect_test ,citation_count_test #asyncio.run(search_googlescholar(query))
+    acm, arxiv, ieee, sciencedirect ,citation_count= acm_test,arxiv_test, ieee_test, sciencedirect_test ,citation_count_test    #asyncio.run(search_googlescholar(query)) #API使うときは入れ替えて
     ###############################################
     #このprint達は後にみんなが作ってくれたそれぞれのスクレイピングファイルを呼び出す
     print("acm_array:", acm)
@@ -138,6 +160,11 @@ def main(query):
     all_data =[test_json]                   #ここではスクレイピングされたacm,arxiv,ieeeの返り値をまとめる
     asyncio.run(update_cite_num(all_data, citation_count))  #被引用数の上書き処理
     print("all_data",all_data)
+
+
+
+    #matchingを呼び出す処理を付け加える
+
 
 
 main(query)
