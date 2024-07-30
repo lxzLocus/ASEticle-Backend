@@ -24,9 +24,12 @@ async def fetch_arxiv(session, url):
 async def fetch_pdf(session, url):
     pdf_url = url.replace("abs", "pdf")
     
-    async with session.get(pdf_url) as res:
-        pdf_data = await res.read()
-        return res.status, pdf_data
+    try:
+        async with session.get(pdf_url) as res:
+            pdf_data = await res.read()
+            return res.status, pdf_data
+    except:
+        return 404, None
 #05 scrap Conference and num of citation 
 async def fetch_semantic(session, url):
     async with aiohttp.ClientSession() as session:
@@ -72,71 +75,82 @@ async def fetch_data(session, queryDetails):
 async def load_site_contents(queryData):
     
     async with aiohttp.ClientSession() as session:
-        #call scrapying func
-        tasks = [fetch_data(session, queryDetails) for queryDetails in queryData]
-        
-        results = await asyncio.gather(*tasks)
-        
-        #add scholar info from scraped data
-        for queryDetails, arxiv_data, pdf_status, pdf_data, venue, citetion_count in results:
-            # Title
-            title = arxiv_data.xpath("//meta[@property='og:title']/@content")[0]
+        try:
+            #call scrapying func
+            tasks = [fetch_data(session, queryDetails) for queryDetails in queryData]
             
-            # Author
-            author = arxiv_data.xpath("//div[@class='authors']/a/text()")
-            authors = ", ".join(author)
+            results = await asyncio.gather(*tasks)
             
-            # Conference 
-            if arxiv_data.xpath("//td[@class='tablecell comments mathjax']/text()"):
-                conf_text = arxiv_data.xpath("//td[@class='tablecell comments mathjax']/text()")[0]
+            #add scholar info from scraped data
+            for queryDetails, arxiv_data, pdf_status, pdf_data, venue, citetion_count in results:
+                # Title
+                title = arxiv_data.xpath("//meta[@property='og:title']/@content")[0]
                 
-                #査読元を学会とする
-                search_terms = ['Accepted by ', 'Accepted for ', 'Published as', 'accepted', 'publish']
-
-                # 小文字に変換してから検索
-                conf_text_lower = conf_text.lower()
-                conference = None
-
-                for term in search_terms:
-                    index = conf_text_lower.find(term.lower())
-                    if index != -1:
-                        conference = conf_text[index + len(term):]
-                        break  
+                # Author
+                author = arxiv_data.xpath("//div[@class='authors']/a/text()")
+                authors = ", ".join(author)
+                
+                # Conference 
+                if arxiv_data.xpath("//td[@class='tablecell comments mathjax']/text()"):
+                    conf_text = arxiv_data.xpath("//td[@class='tablecell comments mathjax']/text()")[0]
                     
-                #apiにより学会見つかった場合変更
-                if venue:   
-                    conference = venue
-            else:
-                if venue:   
-                    conference = venue
-                else:
-                    conference = None
-            
-            # Pages
-            if pdf_status == 200:
-                pdf_file = BytesIO(pdf_data)
-                pdf_reader = PdfFileReader(pdf_file)
-                pages = pdf_reader.getNumPages()      
-            else:
-                pages = None
-            
-            # Date
-            dateline = arxiv_data.xpath("//div[@class='dateline']/text()")[0].strip()
-            date_part = dateline.strip('[]').replace('Submitted on ', '')
-            clean_date_part = date_part.split(' ')[0:3]
-            clean_date_str = ' '.join(clean_date_part)
-            date_obj = datetime.strptime(clean_date_str, '%d %b %Y')
-            date = date_obj.strftime('%y%m%d')
-            
-            # Abstract
-            abstract = arxiv_data.xpath("//meta[@property='og:description']/@content")[0]
-            
-            # Cite num
-            cite_num = citetion_count
-            
-            # Submitted
-            submitted = bool(arxiv_data.xpath("//td[@class='tablecell comments mathjax']/text()"))
+                    #査読元を学会とする
+                    search_terms = ['Accepted by ', 'Accepted for ', 'Published as', 'accepted', 'publish']
 
+                    # 小文字に変換してから検索
+                    conf_text_lower = conf_text.lower()
+                    conference = None
+
+                    for term in search_terms:
+                        index = conf_text_lower.find(term.lower())
+                        if index != -1:
+                            conference = conf_text[index + len(term):]
+                            break  
+                        
+                    #apiにより学会見つかった場合変更
+                    if venue:   
+                        conference = venue
+                else:
+                    if venue:   
+                        conference = venue
+                    else:
+                        conference = None
+                
+                # Pages
+                if pdf_status == 200 and pdf_data:
+                    pdf_file = BytesIO(pdf_data)
+                    pdf_reader = PdfFileReader(pdf_file)
+                    pages = pdf_reader.getNumPages()      
+                else:
+                    pages = None
+                
+                # Date
+                dateline = arxiv_data.xpath("//div[@class='dateline']/text()")[0].strip()
+                date_part = dateline.strip('[]').replace('Submitted on ', '')
+                clean_date_part = date_part.split(' ')[0:3]
+                clean_date_str = ' '.join(clean_date_part)
+                date_obj = datetime.strptime(clean_date_str, '%d %b %Y')
+                date = date_obj.strftime('%y%m%d')
+                
+                # Abstract
+                abstract = arxiv_data.xpath("//meta[@property='og:description']/@content")[0]
+                
+                # Cite num
+                cite_num = citetion_count
+                
+                # Submitted
+                submitted = bool(arxiv_data.xpath("//td[@class='tablecell comments mathjax']/text()"))
+
+        except:
+            title = None
+            authors = None
+            conference = None
+            pages = None
+            date = None
+            abstract = None
+            cite_num = None
+            submitted = None
+            
             # エントリーを追加する
             add_entry(queryDetails["url"], title, authors, conference, pages, date, abstract, cite_num, submitted, queryDetails["relevant_no"])
 
