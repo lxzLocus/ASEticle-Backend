@@ -160,8 +160,8 @@ def add_entry(url, title, author, conference, pages, date, abstract, cite_num, s
 
 
 #MAIN
-def load_arxiv_contents(queryData):
-    asyncio.run(load_site_contents(queryData))
+async def load_arxiv_contents(queryData):
+    await load_site_contents(queryData)#変更
 
     return entries
 

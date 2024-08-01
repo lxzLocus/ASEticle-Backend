@@ -5,8 +5,10 @@ from datetime import datetime
 import aiohttp
 from urllib.parse import quote
 import sys
-sys.path.append('../../')
-from config import Localization
+import os #追加
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))) #追加
+#sys.path.append('../../')
+from config.localization import Localization
 
 IEEE_URL = "https://ieeexplore.ieee.org/"
 
@@ -88,7 +90,7 @@ class CiteNum:
 async def execute(param):
 	entries = []
 
-	for item in param['params']:
+	for item in param:#変更　※paramキーを削除
 		url = item["url"]
 		relevant_no = item["relevant_no"]
 		scraper = WebScraper(url)
@@ -123,4 +125,4 @@ async def execute(param):
 			}
 			entries.append(new_entry)
 
-	return {"result": entries}
+	return entries #変更　※resultキーを削除
