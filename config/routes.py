@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 import sys
 sys.path.append('../')
-from app.module import execute
+from app import scraping_main
 from config import Localization
 
 load_dotenv()
@@ -23,26 +23,9 @@ def execute_route():
 	else:
 		return jsonify({"error": Localization.get('config.routes.bad_request')}), 400
 
-	params = {
-		"params": [
-			{
-				"url": "https://ieeexplore.ieee.org/abstract/document/9908590/",
-				"relevant_no": 3
-			},
-			{
-				"url": "https://ieeexplore.ieee.org/document/7725637/",
-				"relevant_no": 4
-			}
-		]
-	}
+	result = asyncio.run(scraping_main(params))
 
-	result = asyncio.run(execute(params))
-
-	response = make_response(jsonify(result))
-	response.headers["Access-Control-Allow-Origin"] = "*"
-	response.headers["Access-Control-Allow-Headers"] = "X-Requested-With, Origin, X-Csrftoken, Content-Type, Accept"
-
-	return response
+	return result
 
 if __name__ == "__main__":
 	app.run(port=8080, debug=True)

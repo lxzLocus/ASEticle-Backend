@@ -1,4 +1,4 @@
-from module import execute, load_arxiv_contents, load_acm_contents
+from app.module import execute, load_arxiv_contents, load_acm_contents
 import asyncio
 import aiohttp
 from dotenv import load_dotenv
