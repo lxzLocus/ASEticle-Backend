@@ -22,6 +22,7 @@ if __name__ == "__main__":
     }
     query = "machine+learning"
 """
+
 load_dotenv()
 # SerpApiのAPIキーを環境変数から取得
 api_keys = [value for key, value in os.environ.items() if key.startswith("SERP_APIKEY")]
