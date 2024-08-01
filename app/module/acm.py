@@ -33,28 +33,31 @@ async def fetch_semantic(session, url):
         # フルURL
         full_url = f"{base_url}{paper_url}?fields={fields}"
 
-        # 非同期リクエストを送信
-        async with session.get(full_url) as response:
-            res = await response.text()
+        try:
+            # 非同期リクエストを送信
+            async with session.get(full_url) as response:
+                res = await response.text()
+                
+                # JSONデータを解析
+                res_json = json.loads(res)
+                
+                # 指定されたフィールドを抽出
+                venue = res_json.get("venue")
+                citation_count = res_json.get("citationCount")
+                author_list = res_json.get("authors")
+                if author_list:
+                    author_names = [author["name"] for author in author_list]
+                    authors=", ".join(author_names)
+                else:
+                    authors = None
+                if res_json.get("abstract") and res_json.get("abstract") != "[]":
+                    api_abs = res_json.get("abstract")
+                else:
+                    api_abs = None
             
-            # JSONデータを解析
-            res_json = json.loads(res)
-            
-            # 指定されたフィールドを抽出
-            venue = res_json.get("venue")
-            citation_count = res_json.get("citationCount")
-            author_list = res_json.get("authors")
-            if author_list:
-                author_names = [author["name"] for author in author_list]
-                authors=", ".join(author_names)
-            else:
-                authors = None
-            if res_json.get("abstract") and res_json.get("abstract") != "[]":
-                api_abs = res_json.get("abstract")
-            else:
-                api_abs = None
-           
-            return venue, citation_count, authors, api_abs
+                return venue, citation_count, authors, api_abs
+        except:
+            return None, None, None, None
 
 async def fetch_data(session, siteInfo):
     acm_data = await fetch_acm(session, siteInfo["url"])
@@ -123,8 +126,8 @@ async def load_site_contents(siteData):
             cite_num = None
             submitted = None
             
-            # エントリーを追加する
-            add_entry(siteInfo["url"], title, authors, conference, pages, date, abstract, cite_num, submitted, siteInfo["relevant_no"])
+        # エントリーを追加する
+        add_entry(siteInfo["url"], title, authors, conference, pages, date, abstract, cite_num, submitted, siteInfo["relevant_no"])
 
 
 # エントリーを追加する関数
