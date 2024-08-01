@@ -1,40 +1,8 @@
 import polars as pl
-from rapidfuzz import fuzz, process
+from rapidfuzz import process
 import json
 import asyncio
 
-
-class ConferenceMatcher:
-    def __init__(self):
-        self.df = pl.scan_csv("data/conf_n_journal_list.csv")
-        
-    def match(self, entries):
-        for entry in entries:
-            pass
-
-
-async def match(entry) -> None:
-    search_value = fetch_conf_name(entry)
-    
-    if search_value != "":
-        conf_rank = ( #会議名とtier情報の照合,会議名が一致する場合は正式名称に修正したものを取得
-            pl.read_csv("data/conf_n_journal_list.csv")
-            .filter(pl.col("title").str.contains(search_value) | pl.col("acronym").str.contains(search_value))
-            .select(["title", "tier"])
-        )
-        
-        #変換
-        conf_info = conf_rank.to_dict()
-        conf_name = conf_info["title"].to_list()
-        conf_tier = conf_info["tier"].to_list()
-        if len(conf_name) == 0:
-            conf_name = [""]
-            conf_tier = [-1]
-    else:
-        conf_name = [""]
-        conf_tier = [-1]
-
-    fix_entry(entry, conf_name[0], conf_tier[0])
     
 async def fuzzy_match(entry) -> None:
     search_value = fetch_conf_name(entry)
@@ -67,6 +35,7 @@ async def fuzzy_match(entry) -> None:
         conf_tier = [-1]
     
     fix_entry(entry, conf_name[0], conf_tier[0])
+    
 
 def fetch_conf_name(entry) -> str:
     if entry!=None and entry!={}: 
@@ -77,7 +46,6 @@ def fetch_conf_name(entry) -> str:
 
 def fuzzy_match_score(search_value, series):
     ans = process.extractOne(search_value, series)
-    print("extract:" + str(ans))
     if ans[1] < 90:
         return "hoge zxqjb"
     return ans[0]
@@ -91,12 +59,8 @@ def fix_entry(entry, fixed_conf_name, tier):
 
 
 # MAIN
-def match_conference(entry):
-    asyncio.run(match(entry))
+def match_conferences(entries):
+    for entry in entries:
+        asyncio.run(fuzzy_match(entry))
 
-    return json.dumps(entry, indent=4) #json形式で出力
-
-def match_conference_fuzzy(entry):
-    asyncio.run(fuzzy_match(entry))
-
-    return json.dumps(entry, indent=4) #json形式で出力
+    return json.dumps(entries, indent=4) #json形式で出力
