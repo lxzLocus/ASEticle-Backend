@@ -1,9 +1,12 @@
 import asyncio
 import aiohttp
+from dotenv import load_dotenv
+import os
+
 import googlescholar_test #実装時に消す
 
 """
-# テスト　実装時に消す
+# テスト 実装時に消す
 if __name__ == "__main__":
     test_json = {
     'url': 'https://arxiv.org/abs/2403.00448',
@@ -19,32 +22,19 @@ if __name__ == "__main__":
     }
     query = "machine+learning"
 """
+load_dotenv()
 # SerpApiのAPIキーを環境変数から取得
-api_keys = []
-
-
+api_keys = [value for key, value in os.environ.items() if key.startswith("SERP_APIKEY")]
 
 query ="machine+learning"
 
 # 指定されたドメインのみを許可
 allowed_domains = ["https://dl.acm.org/", "https://arxiv.org/", "https://ieeexplore.ieee.org/", "https://www.sciencedirect.com/"]
-
-# 現在のAPIキーのインデックス
-current_key_index = 0
-
-#05
-async def get_api_key():
-    global current_key_index
-    while current_key_index < len(api_keys):
-        api_key = api_keys[current_key_index]
-        return api_key
-    raise Exception("すべてのAPIキーが回数制限に達しました。")
-
 # 04
 async def fetch_results(session, query, start, index):
-    global current_key_index
-    while current_key_index < len(api_keys):
-        api_key = await get_api_key()
+    error_message = "APIKey error"
+
+    for api_key in api_keys:
         params = {
             "engine": "google_scholar",
             "q": query,
@@ -53,19 +43,14 @@ async def fetch_results(session, query, start, index):
             "num": 20
         }
     
-        try:
-            async with session.get("https://serpapi.com/search?", params=params) as response:
-                result = await response.json()
-                if 'error' in result and 'Rate limit reached' in result['error']:
-                    print(f"APIキー {api_key} の回数制限に達しました。次のAPIキーを試します。")
-                    current_key_index += 1
-                else:
-                    return (index, result)
-        except Exception as e:
-            print(f"APIキー {api_key} の使用中にエラーが発生しました: {e}")
-            current_key_index += 1
+        async with session.get("https://serpapi.com/search?", params=params) as response:
+            result = await response.json()
+            if response.status != 200:#'error' in result and 'Rate limit reached' in result['error']:
+                print(f"APIキー {api_key} の使用中にエラーが発生しました。次のAPIキーを試します。")
+            else:
+                return (index, result)
 
-    raise Exception("すべてのAPIキーが回数制限に達しました。")
+    raise Exception("すべてのAPIキーが回数制限に達しました")
 
 # 03
 async def search_googlescholar(query):
@@ -107,7 +92,7 @@ async def search_googlescholar(query):
         return acm_array, arxiv_array, ieee_array, sciencedirect_array, cite_num_list
 
 
-#06
+#05
 #被引用数を上書きする処理（all_data:各サイトのスクレイピング処理の返り値を配列にまとめたもの,new_cite:APIによって取得した被引用数と関連度を格納した配列）
 #all_dataの関連度とnew_citeの関連度が同じならcite_numを上書きする
 async def update_cite_num(all_data, new_cite):
@@ -154,14 +139,3 @@ def main(query):
 
 #01
 main(query) #main関数
-
-
-
-# 使用例
-# from googlescholar_searcher import search_googlescholar
-# query = "deep learning"
-# acm, arxiv, ieee, sciencedirect = asyncio.run(search_googlescholar(query))
-# print("acm_array:", acm)
-# print("arxiv_array:", arxiv)
-# print("ieee_array:", ieee)
-# print("sciencedirect_array:", sciencedirect) 
