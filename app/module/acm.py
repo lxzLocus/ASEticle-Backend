@@ -149,7 +149,7 @@ def add_entry(url, title, author, conference, pages, date, abstract, cite_num, s
 
 
 #MAIN
-def load_acm_contents(siteData):
-    asyncio.run(load_site_contents(siteData))
+async def load_acm_contents(siteData):
+    await load_site_contents(siteData)#変更
 
     return entries
