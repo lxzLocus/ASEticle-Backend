@@ -83,7 +83,7 @@ async def search_googlescholar(query):
         # 辞書型のリストを作成
         all_array = [{"url": url, "relevant_no": index} for index, url in enumerate(url_list)]
         cite_num_list = [{"citation_count": cite_count, "relevant_no": index} for index, cite_count in enumerate(cite_num_list)]
-        
+        asyncio.run(update_cite_num(all_array, cite_num_list)) 
         # リストを分ける
         acm_array = [entry for entry in all_array if allowed_domains[0] in entry["url"]]
         arxiv_array = [entry for entry in all_array if allowed_domains[1] in entry["url"]]
@@ -123,10 +123,10 @@ def main(query):
     acm, arxiv, ieee, sciencedirect ,citation_count= asyncio.run(search_googlescholar(query)) #テスト用、実装時に消す　acm_test,arxiv_test, ieee_test, sciencedirect_test ,citation_count_test
     ###############################################
     #このprint達は後にみんなが作ってくれたそれぞれのスクレイピングファイルを呼び出す．呼び出すときの引数（acm,arxiv,ieee）には，urlとrelevant.noが格納 ex.)acm_array: [{'url': 'https://dl.acm.org/doi/abs/10.1145/2939502.2939516', 'relevant_no': 6}, {'url': 'https://dl.acm.org/doi/abs/10.1145/1835449.1835522', 'relevant_no': 12}, {'url': 'https://dl.acm.org/doi/fullHtml/10.1145/319382.319388', 'relevant_no': 13}, {'url': 'https://dl.acm.org/doi/abs/10.1145/3533378', 'relevant_no': 16}]
-    print("acm_array:", acm)
-    print("arxiv_array:", arxiv)
-    print("ieee_array:", ieee)
-    print("citation_array:",citation_count)
+    result = []
+    result.append(load_acm_contents(acm_array))
+    result.append(load_arxiv_contents(arxiv_array))
+    result.append(execute(ieee_array))
     ###############################################
     test_json = googlescholar_test.main()   #各スクレイピング処理が終わったと仮定して今回はテストデータをインポート　実装時に消す
     all_data =[test_json]                   #ここではスクレイピングされたacm,arxiv,ieeeの返り値をまとめる
