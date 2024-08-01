@@ -1,9 +1,9 @@
 import asyncio
 import aiohttp
-import googlescholar_test
+import googlescholar_test #実装時に消す
 
 """
-# テスト
+# テスト　実装時に消す
 if __name__ == "__main__":
     test_json = {
     'url': 'https://arxiv.org/abs/2403.00448',
@@ -20,7 +20,8 @@ if __name__ == "__main__":
     query = "machine+learning"
 """
 # SerpApiのAPIキーを環境変数から取得
-api_keys = []
+api_keys = ["260c4f8874b974b9e913ce5fc052c8a411c1e9db7ce66b31a66e7be24815e423","628388876b4b171d19a41c7e58be05505f6ef914cf61971de8581544f481e494","30857520551d1569d8f6e19b517c15891222a9b05d2712eb89e7242f13be642a","c15ec87c7055459a6dc413759e8cf84f9f074882276993a7acfc2e8d71a2af18","df191c87adeef0eff28fd85e13408e4f591d778cdf5c1d7b1d97edee71518a01"]
+
 
 
 query ="machine+learning"
@@ -31,6 +32,7 @@ allowed_domains = ["https://dl.acm.org/", "https://arxiv.org/", "https://ieeexpl
 # 現在のAPIキーのインデックス
 current_key_index = 0
 
+#05
 async def get_api_key():
     global current_key_index
     while current_key_index < len(api_keys):
@@ -38,7 +40,7 @@ async def get_api_key():
         return api_key
     raise Exception("すべてのAPIキーが回数制限に達しました。")
 
-# 02
+# 04
 async def fetch_results(session, query, start, index):
     global current_key_index
     while current_key_index < len(api_keys):
@@ -65,7 +67,7 @@ async def fetch_results(session, query, start, index):
 
     raise Exception("すべてのAPIキーが回数制限に達しました。")
 
-# 01
+# 03
 async def search_googlescholar(query):
     async with aiohttp.ClientSession() as session:
         tasks = []
@@ -83,10 +85,6 @@ async def search_googlescholar(query):
         for _, result in results:
             for entry in result.get("organic_results", []):
                 link = entry.get("link") 
-                ################################
-                # [追加]被引用数を取得するコード
-                # api keyが使えるか使えないかの判定も追加する#
-                ################################
                 cited_by = entry.get('inline_links', {}).get('cited_by', {})
                 cite_num = cited_by.get('total')
 
@@ -94,9 +92,6 @@ async def search_googlescholar(query):
                     # 指定されたドメインのURLのみをリストに追加し、/pdf/を含まない
                     if any(domain in link for domain in allowed_domains) and '/pdf/' not in link:
                         url_list.append(link)
-                        #######################################
-                        # [追加]被引用数をcite_num_listにappend#
-                        #######################################
                         cite_num_list.append(cite_num)
         
         # 辞書型のリストを作成
@@ -110,17 +105,9 @@ async def search_googlescholar(query):
         sciencedirect_array = [entry for entry in all_array if allowed_domains[3] in entry["url"]]
         
         return acm_array, arxiv_array, ieee_array, sciencedirect_array, cite_num_list
-"""
-#とりあえず使わないやつ
-async def update_citations(json, citation_count):
-    tasks = []
-    for citation in citation_count:
-        if citation['relevant_no'] == json['relevant_no']:
-            task = asyncio.create_task(update_cite_num(citation, json['cite_num']))
-            tasks.append(task)
-    await asyncio.gather(*tasks)
-"""
 
+
+#06
 #被引用数を上書きする処理（all_data:各サイトのスクレイピング処理の返り値を配列にまとめたもの,new_cite:APIによって取得した被引用数と関連度を格納した配列）
 #all_dataの関連度とnew_citeの関連度が同じならcite_numを上書きする
 async def update_cite_num(all_data, new_cite):
@@ -137,9 +124,9 @@ async def update_cite_num(all_data, new_cite):
                 if data['relevant_no'] == update['relevant_no']:
                     data['cite_num'] = update['citation_count']
 
-
+#02
 def main(query):
-    #APIを呼び出す代わりのテストデータ
+    #APIを呼び出す代わりのテストデータ、実装時に消す
     acm_test = [{'url': 'https://dl.acm.org/doi/abs/10.1145/2939502.2939516', 'relevant_no': 6}, {'url': 'https://dl.acm.org/doi/abs/10.1145/1835449.1835522', 'relevant_no': 12}, {'url': 'https://dl.acm.org/doi/fullHtml/10.1145/319382.319388', 'relevant_no': 13}, {'url': 'https://dl.acm.org/doi/abs/10.1145/3533378', 'relevant_no': 16}]
     arxiv_test = [{'url': 'https://arxiv.org/abs/1206.4656', 'relevant_no': 3}]
     ieee_test =[{'url': 'https://ieeexplore.ieee.org/abstract/document/7424435/', 'relevant_no': 1}, {'url': 'https://ieeexplore.ieee.org/abstract/document/8070809/', 'relevant_no': 2}, {'url': 'https://ieeexplore.ieee.org/abstract/document/5362936/', 'relevant_no': 5}, {'url': 'https://ieeexplore.ieee.org/abstract/document/7724478/', 'relevant_no': 8}, {'url': 'https://ieeexplore.ieee.org/abstract/document/8717641/', 'relevant_no': 9}, {'url': 'https://ieeexplore.ieee.org/abstract/document/8862451/', 'relevant_no': 10}, {'url': 'https://ieeexplore.ieee.org/abstract/document/8697857/', 'relevant_no': 11}, {'url': 'https://ieeexplore.ieee.org/abstract/document/8903465/', 'relevant_no': 15}, {'url': 'https://ieeexplore.ieee.org/abstract/document/10081336/', 'relevant_no': 18}, {'url': 'https://ieeexplore.ieee.org/abstract/document/8839651/', 'relevant_no': 19}]
@@ -147,16 +134,15 @@ def main(query):
     citation_count_test = [{'citation_count': 988, 'relevant_no': 0}, {'citation_count': 455, 'relevant_no': 1}, {'citation_count': 281, 'relevant_no': 2}, {'citation_count': 402, 'relevant_no': 3}, {'citation_count': 201, 'relevant_no': 4}, {'citation_count': 260, 'relevant_no': 5}, {'citation_count': 269, 'relevant_no': 6}, {'citation_count': 527, 'relevant_no': 7}, {'citation_count': 1027, 'relevant_no': 8}, {'citation_count': 225, 'relevant_no': 9}, {'citation_count': 1117, 'relevant_no': 10}, {'citation_count': 789, 'relevant_no': 11}, {'citation_count': 977, 'relevant_no': 12}, {'citation_count': 857, 'relevant_no': 13}, {'citation_count': 787, 'relevant_no': 14}, {'citation_count': 755, 'relevant_no': 15}, {'citation_count': 409, 'relevant_no': 16}, {'citation_count': 169, 'relevant_no': 17}, {'citation_count': 337, 'relevant_no': 18}, {'citation_count': 246, 'relevant_no': 19}]
 
 
-    acm, arxiv, ieee, sciencedirect ,citation_count= acm_test,arxiv_test, ieee_test, sciencedirect_test ,citation_count_test    #asyncio.run(search_googlescholar(query)) #API使うときは入れ替えて
+    acm, arxiv, ieee, sciencedirect ,citation_count= asyncio.run(search_googlescholar(query)) #テスト用、実装時に消す　acm_test,arxiv_test, ieee_test, sciencedirect_test ,citation_count_test
     ###############################################
-    #このprint達は後にみんなが作ってくれたそれぞれのスクレイピングファイルを呼び出す
+    #このprint達は後にみんなが作ってくれたそれぞれのスクレイピングファイルを呼び出す．呼び出すときの引数（acm,arxiv,ieee）には，urlとrelevant.noが格納 ex.)acm_array: [{'url': 'https://dl.acm.org/doi/abs/10.1145/2939502.2939516', 'relevant_no': 6}, {'url': 'https://dl.acm.org/doi/abs/10.1145/1835449.1835522', 'relevant_no': 12}, {'url': 'https://dl.acm.org/doi/fullHtml/10.1145/319382.319388', 'relevant_no': 13}, {'url': 'https://dl.acm.org/doi/abs/10.1145/3533378', 'relevant_no': 16}]
     print("acm_array:", acm)
     print("arxiv_array:", arxiv)
     print("ieee_array:", ieee)
-    print("sciencedirect_array:", sciencedirect)
     print("citation_array:",citation_count)
     ###############################################
-    test_json = googlescholar_test.main()   #各スクレイピング処理が終わったと仮定して今回はテストデータをインポート
+    test_json = googlescholar_test.main()   #各スクレイピング処理が終わったと仮定して今回はテストデータをインポート　実装時に消す
     all_data =[test_json]                   #ここではスクレイピングされたacm,arxiv,ieeeの返り値をまとめる
     asyncio.run(update_cite_num(all_data, citation_count))  #被引用数の上書き処理
     print("all_data",all_data)
@@ -166,8 +152,8 @@ def main(query):
     #matchingを呼び出す処理を付け加える
 
 
-
-main(query)
+#01
+main(query) #main関数
 
 
 
