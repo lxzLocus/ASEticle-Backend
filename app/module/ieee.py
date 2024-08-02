@@ -13,17 +13,6 @@ from config.localization import Localization
 IEEE_URL = "https://ieeexplore.ieee.org/"
 
 class WebScraper:
-	"""This class is used to retrieve a web page from a specified URL and extract metadata from the page content.
-
-	attributes:
-		url (str): URL of the web page to be scraped.
-		page_content (bytes): Content of pages.
-		headers (dict): Header used for HTTP requests.
-
-	method:
-		fetch_page(): Retrieve the page from the specified URL.
-		extract_metadata(): Extract metadata from the retrieved page content.
-	"""
 
 	def __init__(self, url):
 		self.url = url
