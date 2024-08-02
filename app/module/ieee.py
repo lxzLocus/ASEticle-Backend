@@ -17,8 +17,8 @@ load_dotenv()
 
 # 環境変数からプロキシサーバリストを取得
 proxies = [
-    os.getenv("PROXY1"),
-    os.getenv("PROXY2")
+	{"http": os.getenv("PROXY1"), "https": os.getenv("PROXY1")},
+    {"http": os.getenv("PROXY2"), "https": os.getenv("PROXY2")}
 ]
 proxy_index = 0
 
@@ -54,7 +54,7 @@ class WebScraper:
 	def fetch_page(self):
 		try:
 			proxy = get_next_proxy()
-			response = requests.get(self.url, headers=self.headers, proxy=proxy)
+			response = requests.get(self.url, headers=self.headers, proxies=proxy)
 			response.raise_for_status()
 			self.page_content = response.content
 		except requests.exceptions.HTTPError as err:
@@ -88,10 +88,8 @@ class CiteNum:
 	@classmethod
 	async def fetch_cite_num(cls, title):
 		async with aiohttp.ClientSession() as session:
-			proxy = get_next_proxy()
 			async with session.get(
 				f"https://api.semanticscholar.org/graph/v1/paper/search/match?query={quote(title)}",
-				proxy=proxy
 			) as response:
 				result = await response.json()
 

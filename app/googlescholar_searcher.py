@@ -108,4 +108,4 @@ async def scraping_main(query):
 #テスト用
 if __name__ == "__main__":
     query = "RESTAPI"
-    print(asyncio.run(scraping_main(query)) )
+    asyncio.run(scraping_main(query))

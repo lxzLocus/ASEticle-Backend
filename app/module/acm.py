@@ -6,31 +6,11 @@ from lxml import html
 from datetime import datetime
 from io import BytesIO
 from urllib.parse import quote
-from dotenv import load_dotenv
-import os
-
-# 環境変数を読み込む
-load_dotenv()
 
 entries = []
 
-# 環境変数からプロキシサーバリストを取得
-proxies = [
-    os.getenv("PROXY1"),
-    os.getenv("PROXY2")
-]
-proxy_index = 0
-
-# プロキシを交互に選択する関数
-def get_next_proxy():
-    global proxy_index
-    proxy = proxies[proxy_index]
-    proxy_index = (proxy_index + 1) % len(proxies)
-    return proxy
-
 async def fetch_acm(session, url):
-    proxy = get_next_proxy()
-    async with session.get(url, proxy=proxy) as res:
+    async with session.get(url) as res:
         content = await res.text()
         soup = BeautifulSoup(content, "lxml")
         soup_str = str(soup)
@@ -39,46 +19,44 @@ async def fetch_acm(session, url):
         return lxml_data
 
 async def fetch_semantic(session, url):
-    async with aiohttp.ClientSession() as session:
-        # URLエンコード
-        encoded_url = quote(f"URL:{url}")
-        paper_url = encoded_url.replace("#core-collateral-info", "")
+    # URLエンコード
+    encoded_url = quote(f"URL:{url}")
+    paper_url = encoded_url.replace("#core-collateral-info", "")
 
-        # ベースURL
-        base_url = "https://api.semanticscholar.org/graph/v1/paper/"
+    # ベースURL
+    base_url = "https://api.semanticscholar.org/graph/v1/paper/"
 
-        # クエリパラメータ
-        fields = "abstract,authors,citationCount,influentialCitationCount,venue,publicationVenue"
-        
-        # フルURL
-        full_url = f"{base_url}{paper_url}?fields={fields}"
+    # クエリパラメータ
+    fields = "abstract,authors,citationCount,influentialCitationCount,venue,publicationVenue"
+    
+    # フルURL
+    full_url = f"{base_url}{paper_url}?fields={fields}"
 
-        try:
-            proxy = get_next_proxy()
-            # 非同期リクエストを送信
-            async with session.get(full_url, proxy=proxy) as response:
-                res = await response.text()
-                
-                # JSONデータを解析
-                res_json = json.loads(res)
-                
-                # 指定されたフィールドを抽出
-                venue = res_json.get("venue")
-                citation_count = res_json.get("citationCount")
-                author_list = res_json.get("authors")
-                if author_list:
-                    author_names = [author["name"] for author in author_list]
-                    authors=", ".join(author_names)
-                else:
-                    authors = None
-                if res_json.get("abstract") and res_json.get("abstract") != "[]":
-                    api_abs = res_json.get("abstract")
-                else:
-                    api_abs = None
+    try:
+        # 非同期リクエストを送信
+        async with session.get(full_url) as response:
+            res = await response.text()
             
-                return venue, citation_count, authors, api_abs
-        except:
-            return None, None, None, None
+            # JSONデータを解析
+            res_json = json.loads(res)
+            
+            # 指定されたフィールドを抽出
+            venue = res_json.get("venue")
+            citation_count = res_json.get("citationCount")
+            author_list = res_json.get("authors")
+            if author_list:
+                author_names = [author["name"] for author in author_list]
+                authors=", ".join(author_names)
+            else:
+                authors = None
+            if res_json.get("abstract") and res_json.get("abstract") != "[]":
+                api_abs = res_json.get("abstract")
+            else:
+                api_abs = None
+        
+            return venue, citation_count, authors, api_abs
+    except:
+        return None, None, None, None
 
 async def fetch_data(session, siteInfo):
     acm_data = await fetch_acm(session, siteInfo["url"])
@@ -101,22 +79,24 @@ async def load_site_contents(siteData):
                 # author = acm_data.xpath("span[contains(@property, 'givenName')]/text()")
                 
                 # Conference 
-                if acm_data.xpath("//*[@id='skip-to-main-content']/main/article/header/div/div[4]/div[1]/a/text()"):
+                try:
+                    acm_data.xpath("//*[@id='skip-to-main-content']/main/article/header/div/div[4]/div[1]/a/text()")
                     conf_explain = acm_data.xpath("//*[@id='skip-to-main-content']/main/article/header/div/div[4]/div[1]/a/text()")[0]
                     conf_text = conf_explain.split()[0]
                     if venue:   #要確認
                         conference = venue
                     else:
                         conference = conf_text  
-                else:
+                except:
                     conference = None
                 
                 # Pages
-                if acm_data.xpath("//*[@id='skip-to-main-content']/main/article/header/div/div[4]/div[3]/span[1]/text()")[0]:
+                try:
+                    acm_data.xpath("//*[@id='skip-to-main-content']/main/article/header/div/div[4]/div[3]/span[1]/text()")[0]
                     start_page = int(acm_data.xpath("//*[@id='skip-to-main-content']/main/article/header/div/div[4]/div[3]/span[1]/text()")[0])
                     end_page = int(acm_data.xpath("//*[@id='skip-to-main-content']/main/article/header/div/div[4]/div[3]/span[2]/text()")[0])
                     pages = pages = end_page - start_page + 1
-                else:
+                except:
                     pages = None
                 
                 # Date
@@ -137,19 +117,11 @@ async def load_site_contents(siteData):
                 
                 # Submitted ACMは常にtrue
                 submitted = True
-        except:
-            title = None
-            authors = None
-            conference = None
-            pages = None
-            date = None
-            abstract = None
-            cite_num = None
-            submitted = None
             
-        # エントリーを追加する
-        add_entry(siteInfo["url"], title, authors, conference, pages, date, abstract, cite_num, submitted, siteInfo["relevant_no"])
-
+                # エントリーを追加する
+                add_entry(siteInfo["url"], title, authors, conference, pages, date, abstract, cite_num, submitted, siteInfo["relevant_no"])
+        except Exception as e:
+            print(f"Error occurred: {e}")
 
 # エントリーを追加する関数
 def add_entry(url, title, author, conference, pages, date, abstract, cite_num, submitted, relevant_no):
@@ -170,7 +142,7 @@ def add_entry(url, title, author, conference, pages, date, abstract, cite_num, s
 
 
 #MAIN
-async def load_acm_contents(siteData):
-    await load_site_contents(siteData)#変更
+def load_acm_contents(siteData):
+    asyncio.run(load_site_contents(siteData))
 
     return entries

@@ -17,7 +17,7 @@ entries = []
 
 # 環境変数からプロキシサーバリストを取得
 proxies = [
-    os.getenv("PROXY1"),
+	os.getenv("PROXY1"),
     os.getenv("PROXY2")
 ]
 proxy_index = 0
@@ -27,7 +27,7 @@ def get_next_proxy():
     global proxy_index
     proxy = proxies[proxy_index]
     proxy_index = (proxy_index + 1) % len(proxies)
-    return proxy
+    return f"http://{proxy}"
 
 #03 convert lxml data from Arxiv Web Site
 async def fetch_arxiv(session, url):
@@ -40,6 +40,7 @@ async def fetch_arxiv(session, url):
         lxml_data = html.fromstring(soup_bytes)
         
         return lxml_data
+
 #04 download the PDF and count the pages
 async def fetch_pdf(session, url):
     pdf_url = url.replace("abs", "pdf")
@@ -51,60 +52,58 @@ async def fetch_pdf(session, url):
             return res.status, pdf_data
     except:
         return 404, None
+
 #05 scrap Conference and num of citation 
 async def fetch_semantic(session, url):
-    async with aiohttp.ClientSession() as session:
-        #Encode URL
-        encoded_url = quote(f"URL:{url}")
+    #Encode URL
+    encoded_url = quote(f"URL:{url}")
 
-        # ベースURL
-        base_url = "https://api.semanticscholar.org/graph/v1/paper/"
+    # Base URL
+    base_url = "https://api.semanticscholar.org/graph/v1/paper/"
 
-        # Query params
-        fields = "citationCount, influentialCitationCount, venue, publicationVenue, publicationTypes, journal"
-        
-        #url
-        full_url = f"{base_url}{encoded_url}?fields={fields}"
+    # Query params
+    fields = "citationCount,influentialCitationCount,venue,publicationVenue,publicationTypes,journal"
+    
+    # Full URL
+    full_url = f"{base_url}{encoded_url}?fields={fields}"
 
-        proxy = get_next_proxy()
-        # send request ues api
-        async with session.get(full_url, proxy=proxy) as response:
+    try:
+        async with session.get(full_url) as response:
             res = await response.text()
             res_json = json.loads(res)
             
-            #extract conference, citation count
+            # Extract conference, citation count
             venue = res_json.get("venue")
             citation_count = res_json.get("citationCount")
             
             return venue, citation_count
+    except:
+        return None, None
 
 #02 scraping from several method
 async def fetch_data(session, queryDetails):
     url = queryDetails["url"]
     
-    #In case of direct link to PDF, change the link
+    # In case of direct link to PDF, change the link
     if "https://arxiv.org/pdf/" in url:
         url = url.replace("pdf", "abs")
     
     arxiv_data = await fetch_arxiv(session, url)
     pdf_status, pdf_data = await fetch_pdf(session, url)
-    venue, citetion_count = await fetch_semantic(session, url)
+    venue, citation_count = await fetch_semantic(session, url)
     
-    return queryDetails, arxiv_data, pdf_status, pdf_data, venue, citetion_count
-
+    return queryDetails, arxiv_data, pdf_status, pdf_data, venue, citation_count
 
 #01 load from query array
 async def load_site_contents(queryData):
-    
     async with aiohttp.ClientSession() as session:
         try:
-            #call scrapying func
+            # Call scraping functions
             tasks = [fetch_data(session, queryDetails) for queryDetails in queryData]
-            
             results = await asyncio.gather(*tasks)
             
-            #add scholar info from scraped data
-            for queryDetails, arxiv_data, pdf_status, pdf_data, venue, citetion_count in results:
+            # Add scholar info from scraped data
+            for queryDetails, arxiv_data, pdf_status, pdf_data, venue, citation_count in results:
                 # Title
                 title = arxiv_data.xpath("//meta[@property='og:title']/@content")[0]
                 
@@ -116,27 +115,24 @@ async def load_site_contents(queryData):
                 if arxiv_data.xpath("//td[@class='tablecell comments mathjax']/text()"):
                     conf_text = arxiv_data.xpath("//td[@class='tablecell comments mathjax']/text()")[0]
                     
-                    #査読元を学会とする
+                    # 査読元を学会とする
                     search_terms = ['Accepted by ', 'Accepted for ', 'Published as', 'accepted', 'publish']
-
+                    
                     # 小文字に変換してから検索
                     conf_text_lower = conf_text.lower()
                     conference = None
-
+                    
                     for term in search_terms:
                         index = conf_text_lower.find(term.lower())
                         if index != -1:
                             conference = conf_text[index + len(term):]
                             break  
                         
-                    #apiにより学会見つかった場合変更
+                    # APIにより学会見つかった場合変更
                     if venue:   
                         conference = venue
                 else:
-                    if venue:   
-                        conference = venue
-                    else:
-                        conference = None
+                    conference = venue or None
                 
                 # Pages
                 if pdf_status == 200 and pdf_data:
@@ -158,28 +154,18 @@ async def load_site_contents(queryData):
                 abstract = arxiv_data.xpath("//meta[@property='og:description']/@content")[0]
                 
                 # Cite num
-                cite_num = citetion_count
+                cite_num = citation_count
                 
                 # Submitted
                 submitted = bool(arxiv_data.xpath("//td[@class='tablecell comments mathjax']/text()"))
+                
+                # Add entry
+                add_entry(queryDetails["url"], title, authors, conference, pages, date, abstract, cite_num, submitted, queryDetails["relevant_no"])
+        except Exception as e:
+            print(f"Error occurred: {e}")
 
-        except:
-            title = None
-            authors = None
-            conference = None
-            pages = None
-            date = None
-            abstract = None
-            cite_num = None
-            submitted = None
-            
-            # エントリーを追加する
-            add_entry(queryDetails["url"], title, authors, conference, pages, date, abstract, cite_num, submitted, queryDetails["relevant_no"])
-
-
-#06 func an add to entry 
+#06 func to add to entry 
 def add_entry(url, title, author, conference, pages, date, abstract, cite_num, submitted, relevant_no):
-
     new_entry = {
         "url": url,
         "title": title,
@@ -194,9 +180,7 @@ def add_entry(url, title, author, conference, pages, date, abstract, cite_num, s
     }
     entries.append(new_entry)
 
-
-#MAIN
-async def load_arxiv_contents(queryData):
-    await load_site_contents(queryData)
-
+# MAIN
+def load_arxiv_contents(queryData):
+    asyncio.run(load_site_contents(queryData))
     return entries
