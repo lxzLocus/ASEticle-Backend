@@ -39,7 +39,6 @@ async def fetch_acm(session, url):
         return lxml_data
 
 async def fetch_semantic(session, url):
-    proxy = get_next_proxy()
     async with aiohttp.ClientSession() as session:
         # URLエンコード
         encoded_url = quote(f"URL:{url}")
@@ -55,6 +54,7 @@ async def fetch_semantic(session, url):
         full_url = f"{base_url}{paper_url}?fields={fields}"
 
         try:
+            proxy = get_next_proxy()
             # 非同期リクエストを送信
             async with session.get(full_url, proxy=proxy) as response:
                 res = await response.text()
@@ -68,7 +68,7 @@ async def fetch_semantic(session, url):
                 author_list = res_json.get("authors")
                 if author_list:
                     author_names = [author["name"] for author in author_list]
-                    authors = ", ".join(author_names)
+                    authors=", ".join(author_names)
                 else:
                     authors = None
                 if res_json.get("abstract") and res_json.get("abstract") != "[]":
@@ -87,6 +87,7 @@ async def fetch_data(session, siteInfo):
     return siteInfo, acm_data, venue, citetion_count, authors, api_abs
 
 async def load_site_contents(siteData):
+    
     async with aiohttp.ClientSession() as session:
         try:
             tasks = [fetch_data(session, siteInfo) for siteInfo in siteData]
@@ -114,7 +115,7 @@ async def load_site_contents(siteData):
                 if acm_data.xpath("//*[@id='skip-to-main-content']/main/article/header/div/div[4]/div[3]/span[1]/text()")[0]:
                     start_page = int(acm_data.xpath("//*[@id='skip-to-main-content']/main/article/header/div/div[4]/div[3]/span[1]/text()")[0])
                     end_page = int(acm_data.xpath("//*[@id='skip-to-main-content']/main/article/header/div/div[4]/div[3]/span[2]/text()")[0])
-                    pages = end_page - start_page + 1
+                    pages = pages = end_page - start_page + 1
                 else:
                     pages = None
                 
@@ -127,7 +128,7 @@ async def load_site_contents(siteData):
                 if api_abs:
                     abstract = api_abs
                 elif acm_data.xpath("//*[@id='abstract']/div/text()"):
-                    abstract = acm_data.xpath("//*[@id='abstract']/div/text()")[0]
+                    abstract=acm_data.xpath("//*[@id='abstract']/div/text()")
                 else:
                     abstract = None
                 
@@ -146,8 +147,9 @@ async def load_site_contents(siteData):
             cite_num = None
             submitted = None
             
-            # エントリーを追加する
-            add_entry(siteInfo["url"], title, authors, conference, pages, date, abstract, cite_num, submitted, siteInfo["relevant_no"])
+        # エントリーを追加する
+        add_entry(siteInfo["url"], title, authors, conference, pages, date, abstract, cite_num, submitted, siteInfo["relevant_no"])
+
 
 # エントリーを追加する関数
 def add_entry(url, title, author, conference, pages, date, abstract, cite_num, submitted, relevant_no):
@@ -166,8 +168,9 @@ def add_entry(url, title, author, conference, pages, date, abstract, cite_num, s
     }
     entries.append(new_entry)
 
-# MAIN
+
+#MAIN
 async def load_acm_contents(siteData):
-    await load_site_contents(siteData)
+    await load_site_contents(siteData)#変更
 
     return entries

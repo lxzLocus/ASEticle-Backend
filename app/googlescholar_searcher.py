@@ -1,4 +1,4 @@
-from app.module import execute, load_arxiv_contents, load_acm_contents
+from module import execute, load_arxiv_contents, load_acm_contents
 import asyncio
 import aiohttp
 from dotenv import load_dotenv
@@ -108,4 +108,4 @@ async def scraping_main(query):
 #テスト用
 if __name__ == "__main__":
     query = "RESTAPI"
-    asyncio.run(scraping_main(query)) 
+    print(asyncio.run(scraping_main(query)) )
