@@ -90,6 +90,11 @@ async def execute(param):
     entries = []
 
     for item in param:
+        
+        #pdfの場合の処理
+        if "/pdf/" in item["url"]:
+            item["url"] = item["url"].replace("/pdf/", "/abs/")
+        
         url = item["url"]
         relevant_no = item["relevant_no"]
         cite_num = item["cite_num"]
@@ -98,44 +103,44 @@ async def execute(param):
 
         metadata = scraper.extract_metadata()
 
-    if metadata:
-        # Retrieving contents from metadata
-        title = metadata.xpath("//meta[@property='og:title']/@content")[0]
-        authors = ", ".join(metadata.xpath("//div[@class='authors']/a/text()"))
-        conference = metadata.get('publicationTitle', '')
-        
-        #######
-        if metadata.xpath("//td[@class='tablecell comments mathjax']/text()"):
-            conf_text = metadata.xpath("//td[@class='tablecell comments mathjax']/text()")[0]
-            search_terms = ['Accepted by ', 'Accepted for ', 'Published as', 'accepted', 'publish']
-        #######
+        if metadata:
+            # Retrieving contents from metadata
+            title = metadata.xpath("//meta[@property='og:title']/@content")[0]
+            authors = ", ".join(metadata.xpath("//div[@class='authors']/a/text()"))
+            conference = metadata.get('publicationTitle', '')
             
-        
-        dateline = metadata.xpath("//div[@class='dateline']/text()")[0].strip()
-        date_part = dateline.strip('[]').replace('Submitted on ', '')
-        clean_date_part = date_part.split(' ')[0:3]
-        clean_date_str = ' '.join(clean_date_part)
-        date_obj = datetime.strptime(clean_date_str, '%d %b %Y')
-        date = date_obj.strftime('%y%m%d')
-        
-        abstract = metadata.xpath("//meta[@property='og:description']/@content")[0]
-        submitted = bool(metadata.xpath("//td[@class='tablecell comments mathjax']/text()"))
-        
-        status, pages = await PdfCounter.fetch_pdf_pages(url)
-        venue, cite_num = await SemanticApi.fetch_semantic_api(url)
-        
-        new_entry = {
-            "url": url,
-            "title": title,
-            "author": authors,
-            "conference": venue,
-            "pages": pages,
-            "date": date,
-            "abstract": abstract,
-            "cite_num": cite_num,
-            "submitted": submitted,
-            "relevant_no": relevant_no,
-        }
-        entries.append(new_entry)
+            #######
+            if metadata.xpath("//td[@class='tablecell comments mathjax']/text()"):
+                conf_text = metadata.xpath("//td[@class='tablecell comments mathjax']/text()")[0]
+                search_terms = ['Accepted by ', 'Accepted for ', 'Published as', 'accepted', 'publish']
+            #######
+                
+            
+            dateline = metadata.xpath("//div[@class='dateline']/text()")[0].strip()
+            date_part = dateline.strip('[]').replace('Submitted on ', '')
+            clean_date_part = date_part.split(' ')[0:3]
+            clean_date_str = ' '.join(clean_date_part)
+            date_obj = datetime.strptime(clean_date_str, '%d %b %Y')
+            date = date_obj.strftime('%y%m%d')
+            
+            abstract = metadata.xpath("//meta[@property='og:description']/@content")[0]
+            submitted = bool(metadata.xpath("//td[@class='tablecell comments mathjax']/text()"))
+            
+            status, pages = await PdfCounter.fetch_pdf_pages(url)
+            venue, cite_num = await SemanticApi.fetch_semantic_api(url)
+            
+            new_entry = {
+                "url": url,
+                "title": title,
+                "author": authors,
+                "conference": venue,
+                "pages": pages,
+                "date": date,
+                "abstract": abstract,
+                "cite_num": cite_num,
+                "submitted": submitted,
+                "relevant_no": relevant_no,
+            }
+            entries.append(new_entry)
 
     return entries
