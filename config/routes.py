@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 import sys
 sys.path.append('../')
-from app import scraping_main
+from src import scraping_main
 from config import Localization
 
 load_dotenv()

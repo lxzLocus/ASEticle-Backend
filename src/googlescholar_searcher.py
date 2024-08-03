@@ -1,11 +1,11 @@
-from app.module import acm_execute
-from app.module import arxiv_execute
-from app.module import ieee_execute
+from src.module import acm_execute
+from src.module import arxiv_execute
+from src.module import ieee_execute
 import asyncio
 import aiohttp
 from dotenv import load_dotenv
 import os
-from app.matching import match_conferences
+from src.matching import match_conferences
 
 load_dotenv()
 # SerpApiのAPIキーを環境変数から取得
