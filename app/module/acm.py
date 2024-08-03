@@ -33,7 +33,7 @@ async def fetch_semantic(session, url):
         
         # フルURL
         full_url = f"{base_url}{paper_url}?fields={fields}"
-        
+
         try:
             # 非同期リクエストを送信
             async with session.get(full_url) as response:
@@ -55,13 +55,11 @@ async def fetch_semantic(session, url):
                     api_abs = res_json.get("abstract")
                 else:
                     api_abs = None
+
+            
+                return venue, citation_count, authors, api_abs
         except:
-                venue = None
-                citation_count = None
-                authors = None
-                api_abs = None
-   
-        return venue, citation_count, authors, api_abs
+            return None, None, None, None
 
 
 async def fetch_data(session, siteInfo):
