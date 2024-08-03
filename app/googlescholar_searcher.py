@@ -40,7 +40,7 @@ async def search_googlescholar(query):
     async with aiohttp.ClientSession() as session:
         tasks = []
         
-        for i in range(6):
+        for i in range(3):
             start = i * 20
             tasks.append(fetch_results(session, query, start, i))
         
@@ -102,11 +102,11 @@ async def scraping_main(query):
 
     await update_cite_num(result, citation_count) #被引用数の上書き処理
     print("all_data",result)
-    print("ieee", result[2])
+
     #matchingを呼び出す処理を付け加える
     return result
 
-#テスト用
-if __name__ == "__main__":
-    query = "fuzzing"
-    asyncio.run(scraping_main(query))
+# #テスト用
+# if __name__ == "__main__":
+#     query = "fuzzing"
+#     asyncio.run(scraping_main(query))
