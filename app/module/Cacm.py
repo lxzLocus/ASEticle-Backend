@@ -43,7 +43,7 @@ class WebScraper:
 
         # Extract using XPATH
         extractContent = html.fromstring(self.page_content)
-        if not extractContent:
+        if extractContent is None:
             print(Localization.get('app.module.acm.extract.not_found'))
             return []
 
@@ -95,20 +95,17 @@ async def execute(param):
         scraper = WebScraper(url)
         scraper.fetch_page()
 
-        metadata = scraper.extract_metadata()
+        metadata = scraper.extract_metadata() # type: lxml.etree._Element
 
-        if metadata:
+        if metadata is not None:
             # Retrieving contents from metadata
             title = metadata.xpath("//meta[@property='og:title']/@content")[0]
             authors = ", ".join(metadata.xpath("//div[@class='authors']/a/text()"))
                 
             
-            dateline = metadata.xpath("//div[@class='dateline']/text()")[0].strip()
-            date_part = dateline.strip('[]').replace('Submitted on ', '')
-            clean_date_part = date_part.split(' ')[0:3]
-            clean_date_str = ' '.join(clean_date_part)
-            date_obj = datetime.strptime(clean_date_str, '%d %b %Y')
-            date = date_obj.strftime('%y%m%d')
+            dateline = metadata.xpath("//*[@id='skip-to-main-content']/main/article/header/div/div[5]/span[2]/text()")[0].strip()
+            date_obj = datetime.strptime(dateline, '%d %B %Y')
+            date = date_obj.strftime('%Y%m%d')
             
             try:
                 start_page = int(xpath.xpath('//span[@property="pageStart"]/text()')[0])
@@ -120,7 +117,7 @@ async def execute(param):
             venue, cite_num, authors, api_abs = await SemanticApi.fetch_semantic_api(url)
             
             if api_abs is None:
-                abstract = metadata.xpath("//meta[@property='og:description']/@content")[0]
+                abstract = api_abs if api_abs else (metadata.xpath("//*[@id='abstract']/div/text()") or [None])[0]
             else:
                 abstract = api_abs
                 
