@@ -98,8 +98,6 @@ async def execute(param):
         if len(metadata) > 0:
             # Retrieving contents from metadata
             title = metadata.xpath("//meta[@property='og:title']/@content")[0]
-            authors = ", ".join(metadata.xpath("//div[@class='authors']/a/text()"))
-                
             
             dateline = metadata.xpath("//*[@id='skip-to-main-content']/main/article/header/div/div[5]/span[2]/text()")[0].strip()
             date_obj = datetime.strptime(dateline, '%d %B %Y')
