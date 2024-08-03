@@ -1,12 +1,10 @@
 import aiohttp
-import asyncio
 import requests
 import sys
 import os
 from bs4 import BeautifulSoup
 from lxml import html
 from datetime import datetime
-from io import BytesIO
 from urllib.parse import quote
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))) #追加
@@ -39,13 +37,13 @@ class WebScraper:
     def extract_metadata(self):
         if not self.page_content:
             print(Localization.get('app.module.acm.extract.fetch_error'))
-            return []
+            return html.Element("html")
 
         # Extract using XPATH
         extractContent = html.fromstring(self.page_content)
         if extractContent is None:
             print(Localization.get('app.module.acm.extract.not_found'))
-            return []
+            return html.Element("html")
 
         return extractContent
 
@@ -95,9 +93,9 @@ async def execute(param):
         scraper = WebScraper(url)
         scraper.fetch_page()
 
-        metadata = scraper.extract_metadata() # type: lxml.etree._Element
+        metadata = scraper.extract_metadata() # type: html.HtmlElement
 
-        if metadata is not None:
+        if len(metadata) > 0:
             # Retrieving contents from metadata
             title = metadata.xpath("//meta[@property='og:title']/@content")[0]
             authors = ", ".join(metadata.xpath("//div[@class='authors']/a/text()"))
@@ -108,8 +106,8 @@ async def execute(param):
             date = date_obj.strftime('%Y%m%d')
             
             try:
-                start_page = int(xpath.xpath('//span[@property="pageStart"]/text()')[0])
-                end_page = int(xpath.xpath('//span[@property="pageEnd"]/text()')[0])
+                start_page = int(metadata.xpath('//span[@property="pageStart"]/text()')[0])
+                end_page = int(metadata.xpath('//span[@property="pageEnd"]/text()')[0])
                 pages = end_page - start_page + 1
             except:
                 pages = None
@@ -117,11 +115,11 @@ async def execute(param):
             venue, cite_num, authors, api_abs = await SemanticApi.fetch_semantic_api(url)
             
             if api_abs is None:
-                abstract = api_abs if api_abs else (metadata.xpath("//*[@id='abstract']/div/text()") or [None])[0]
+                abstract = metadata.xpath("//*[@id='abstract']/div/text()")[0]
             else:
                 abstract = api_abs
                 
-            submitted = bool(metadata.xpath("//td[@class='tablecell comments mathjax']/text()"))
+            submitted = True # ACMの場合は常にTrue
             
             new_entry = {
                 "url": url,
