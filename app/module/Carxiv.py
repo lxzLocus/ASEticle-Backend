@@ -78,7 +78,7 @@ class SemanticApi:
             ) as response:
                 result = await response.json()
 
-            if "data" in result:
+            if result:
                 # Ensure venue and citationCount are fetched correctly
                 venue = result.get("venue", None)
                 citation_count = result.get("citationCount", None)
