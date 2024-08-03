@@ -18,6 +18,7 @@ async def fetch_acm(session, url):
         lxml_data = html.fromstring(soup_bytes)
         return lxml_data
 
+
 async def fetch_semantic(session, url):
     async with aiohttp.ClientSession() as session:
         # URLエンコード
@@ -54,16 +55,19 @@ async def fetch_semantic(session, url):
                     api_abs = res_json.get("abstract")
                 else:
                     api_abs = None
+
             
                 return venue, citation_count, authors, api_abs
         except:
             return None, None, None, None
+
 
 async def fetch_data(session, siteInfo):
     acm_data = await fetch_acm(session, siteInfo["url"])
     venue, citetion_count, authors, api_abs = await fetch_semantic(session, siteInfo["url"])
     
     return siteInfo, acm_data, venue, citetion_count, authors, api_abs
+
 
 async def load_site_contents(siteData):
     
