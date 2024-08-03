@@ -1,10 +1,11 @@
-from module.acm import acm_execute
-from module.arxiv import arxiv_execute
-from module.ieee import ieee_execute
+from app.module import acm_execute
+from app.module import arxiv_execute
+from app.module import ieee_execute
 import asyncio
 import aiohttp
 from dotenv import load_dotenv
 import os
+from app.matching import match_conferences
 
 load_dotenv()
 # SerpApiのAPIキーを環境変数から取得
@@ -101,9 +102,11 @@ async def scraping_main(query):
     result.append(await ieee_execute(ieee))
 
     await update_cite_num(result, citation_count) #被引用数の上書き処理
-    print("all_data",result)
+    # print("all_data",result)
 
     #matchingを呼び出す処理を付け加える
+    result = await match_conferences(result)
+    print(result)
     return result
 
 # #テスト用
