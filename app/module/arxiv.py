@@ -28,6 +28,8 @@ proxies2 = [
 ]
 proxy_index = 0
 
+ARXIV_URL = "https://arxiv.org/"
+
 # プロキシを交互に選択する関数1
 def get_next_proxy1():
     global proxy_index
@@ -109,7 +111,7 @@ class SemanticApi:
             ) as response:
                 result = await response.json()
 
-            if "data" in result:
+            if result:
                 # Ensure venue and citationCount are fetched correctly
                 venue = result.get("venue", None)
                 citation_count = result.get("citationCount", None)
