@@ -20,11 +20,15 @@ ARXIV_URL = "https://arxiv.org/"
 # 環境変数からプロキシサーバリストを取得
 proxies1 = [
 	{"http": os.getenv("PROXY1"), "https": os.getenv("PROXY1")},
-    {"http": os.getenv("PROXY2"), "https": os.getenv("PROXY2")}
+    {"http": os.getenv("PROXY2"), "https": os.getenv("PROXY2")},
+    {"http": os.getenv("PROXY3"), "https": os.getenv("PROXY3")},
+    {"http": os.getenv("PROXY4"), "https": os.getenv("PROXY4")}
 ]
 proxies2 = [
 	os.getenv("PROXY1"),
-    os.getenv("PROXY2")
+    os.getenv("PROXY2"),
+    os.getenv("PROXY3"),
+    os.getenv("PROXY4")
 ]
 proxy_index = 0
 
