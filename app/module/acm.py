@@ -125,6 +125,6 @@ async def load_site_contents(siteData):
     
     return entries
 
-async def execute(siteData):
+async def acm_execute(siteData):
     entries = await load_site_contents(siteData)
     return entries

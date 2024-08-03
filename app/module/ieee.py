@@ -107,7 +107,7 @@ class CiteNum:
 			else:
 				return None
 
-async def execute(param):
+async def ieee_execute(param):
 	entries = []
 
 	for item in param:#変更　※paramキーを削除

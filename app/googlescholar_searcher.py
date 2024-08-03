@@ -1,4 +1,6 @@
-from module import execute, load_arxiv_contents, load_acm_contents
+from module.acm import acm_execute
+from module.arxiv import arxiv_execute
+from module.ieee import ieee_execute
 import asyncio
 import aiohttp
 from dotenv import load_dotenv
@@ -93,19 +95,18 @@ async def update_cite_num(all_data, new_cite):
 #02
 async def scraping_main(query):
     acm, arxiv, ieee, sciencedirect ,citation_count= await search_googlescholar(query) #テスト用、実装時に消す　acm_test,arxiv_test, ieee_test, sciencedirect_test ,citation_count_test
-    #print(ieee)
     result = []
-    result.append(await load_acm_contents(acm))
-    result.append(await load_arxiv_contents(arxiv))
-    result.append(await execute(ieee))
+    result.append(await acm_execute(acm))
+    result.append(await arxiv_execute(arxiv))
+    result.append(await ieee_execute(ieee))
 
     await update_cite_num(result, citation_count) #被引用数の上書き処理
     print("all_data",result)
-
+    print("ieee", result[2])
     #matchingを呼び出す処理を付け加える
     return result
 
 #テスト用
 if __name__ == "__main__":
-    query = "RESTAPI"
+    query = "fuzzing"
     asyncio.run(scraping_main(query))

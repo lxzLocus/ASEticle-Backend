@@ -119,7 +119,7 @@ class SemanticApi:
             else:
                 return None, None
 
-async def execute(param):
+async def arxiv_execute(param):
     entries = []
 
     for item in param:
