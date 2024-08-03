@@ -95,17 +95,19 @@ async def update_cite_num(all_data, new_cite):
 
 #02
 async def scraping_main(query):
-    acm, arxiv, ieee, sciencedirect ,citation_count= await search_googlescholar(query) #テスト用、実装時に消す　acm_test,arxiv_test, ieee_test, sciencedirect_test ,citation_count_test
+    acm, arxiv, ieee, sciencedirect, citation_count = await search_googlescholar(query)
     result = []
     result.append(await acm_execute(acm))
     result.append(await arxiv_execute(arxiv))
     result.append(await ieee_execute(ieee))
 
-    await update_cite_num(result, citation_count) #被引用数の上書き処理
-    # print("all_data",result)
+    await update_cite_num(result, citation_count)  # 被引用数の上書き処理
 
-    #matchingを呼び出す処理を付け加える
-    result = await match_conferences(result)
+    # result を平坦化する
+    flat_result = [item for sublist in result for item in sublist]
+
+    # matching を呼び出す処理を付け加える
+    result = await match_conferences(flat_result)
     print(result)
     return result
 
