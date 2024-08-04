@@ -2,7 +2,7 @@
 FROM python:3.12.4
 
 # 作業ディレクトリを設定
-# WORKDIR /app
+WORKDIR /app
 
 # 必要なライブラリをインストールするためのrequirements.txtをコピー
 COPY requirements.txt .
@@ -13,5 +13,5 @@ RUN apt-get update && apt-get install -y \
   && pip install --upgrade pip \
   && pip install -r requirements.txt
 
-# WORKDIR /config
-# CMD ["python3",  "routes.py"]
+WORKDIR /app/config
+CMD ["python3",  "routes.py"]
