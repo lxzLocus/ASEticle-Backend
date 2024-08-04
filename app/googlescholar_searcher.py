@@ -6,6 +6,8 @@ import aiohttp
 from dotenv import load_dotenv
 import os
 from app.matching import match_conferences
+import re
+import json
 
 load_dotenv()
 # SerpApiのAPIキーを環境変数から取得
@@ -108,6 +110,26 @@ async def scraping_main(query):
 
     # matching を呼び出す処理を付け加える
     result = await match_conferences(flat_result)
+
+    data = json.loads(result)
+
+    for record in data:
+        if 'date' in record:
+            # YYYYMMDD to YYMMDD
+            if re.match(r'^\d{8}$', record['date']):
+                record['date'] = record['date'][2:8]
+            # YYMMDD to YYMMDD
+            elif re.match(r'^\d{6}$', record['date']):
+                record['date'] = record['date']
+            # YYYY-MM-DD hh:mm:ss to YYMMDD
+            elif re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', record['date']):
+                date_part = record['date'].split(' ')[0]
+                record['date'] = date_part[2:4] + date_part[5:7] + date_part[8:10]
+            else:
+                record['date'] = record['date']  # 変換できない場合はそのまま返す
+
+    result = json.dumps(data, indent=4)
+
     print(result)
     return result
 
