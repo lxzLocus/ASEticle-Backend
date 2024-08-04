@@ -18,7 +18,9 @@ load_dotenv()
 # 環境変数からプロキシサーバリストを取得
 proxies = [
 	{"http": os.getenv("PROXY1"), "https": os.getenv("PROXY1")},
-    {"http": os.getenv("PROXY2"), "https": os.getenv("PROXY2")}
+    {"http": os.getenv("PROXY2"), "https": os.getenv("PROXY2")},
+	{"http": os.getenv("PROXY3"), "https": os.getenv("PROXY3")},
+	{"http": os.getenv("PROXY4"), "https": os.getenv("PROXY4")}
 ]
 proxy_index = 0
 

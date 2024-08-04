@@ -20,11 +20,15 @@ ARXIV_URL = "https://arxiv.org/"
 # 環境変数からプロキシサーバリストを取得
 proxies1 = [
 	{"http": os.getenv("PROXY1"), "https": os.getenv("PROXY1")},
-    {"http": os.getenv("PROXY2"), "https": os.getenv("PROXY2")}
+    {"http": os.getenv("PROXY2"), "https": os.getenv("PROXY2")},
+    {"http": os.getenv("PROXY3"), "https": os.getenv("PROXY3")},
+    {"http": os.getenv("PROXY4"), "https": os.getenv("PROXY4")}
 ]
 proxies2 = [
 	os.getenv("PROXY1"),
-    os.getenv("PROXY2")
+    os.getenv("PROXY2"),
+    os.getenv("PROXY3"),
+    os.getenv("PROXY4")
 ]
 proxy_index = 0
 
@@ -85,7 +89,7 @@ class PdfCounter:
         async with aiohttp.ClientSession() as session:
             try:
                 proxy = get_next_proxy2()
-                async with session.get(pdf_url, proxy=proxy) as response:
+                async with session.get(pdf_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}, proxy=proxy) as response:
                     if response.status == 200:
                         pdf_data = await response.read()
                         pdf_file = BytesIO(pdf_data)
