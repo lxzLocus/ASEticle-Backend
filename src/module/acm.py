@@ -13,7 +13,9 @@ load_dotenv()
 
 proxies = [
 	os.getenv("PROXY1"),
-    os.getenv("PROXY2")
+    os.getenv("PROXY2"),
+    os.getenv("PROXY3"),
+    os.getenv("PROXY4")
 ]
 proxy_index = 0
 
