@@ -33,7 +33,7 @@ class WebScraper:
 
     async def fetch_page(self, session):
         proxy = get_next_proxy()
-        async with session.get(self.url, proxy=proxy) as response:
+        async with session.get(self.url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}, proxy=proxy) as response:
             content = await response.text()
             soup = BeautifulSoup(content, "lxml")
             soup_str = str(soup)
