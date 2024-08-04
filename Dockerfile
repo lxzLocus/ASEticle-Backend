@@ -13,5 +13,5 @@ RUN apt-get update && apt-get install -y \
   && pip install --upgrade pip \
   && pip install -r requirements.txt
 
-WORKDIR /config
-CMD ["python3",  "routes.py"]
+# WORKDIR /config
+# CMD ["python3",  "routes.py"]
